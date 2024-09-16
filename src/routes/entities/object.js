@@ -7,7 +7,6 @@ const ERROR_422 = "Oops. the syntax of your request is correct, but data on this
 const DEFAULT_LIMIT = 10;
 
 export function requestObject(app, BASE_URI) {
-
     const objectHandler = async(req, res) => {
         // 1. resolve to special pages
         if (req.params.objectNumber === "removed") {
@@ -24,6 +23,7 @@ export function requestObject(app, BASE_URI) {
         let _error = "";
         let _manifest = false;
         let _open = false;
+        let _easy = false;
         let result_cidoc;
 
         // define path to resolve to
@@ -63,12 +63,27 @@ export function requestObject(app, BASE_URI) {
                     : undefined;
         }
 
+        // if easy - return easy
+
+        try {
+            _easy = parseBoolean(req.query.easy) || false;
+            console.log(_easy)
+            console.log(x)
+        } catch (e) {
+           console.log(e)
+        }
+
         // if asked for image, only return manifest link.
         try {
             _manifest = parseBoolean(req.query.manifest) || false;
             _open = parseBoolean(req.query.open) || false;
         } catch (e) {
             console.log(e);
+        }
+
+        if (_easy) {
+            console.log(_easy)
+            res.json(x[0]["EASY"])
         }
 
         try {
