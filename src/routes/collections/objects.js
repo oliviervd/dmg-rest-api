@@ -16,40 +16,48 @@ const CC_LICENSES = {
   "IC": "http://rightsstatements.org/vocab/InC/1.0/"
 }
 
-
 export function requestObjects(app, BASE_URI) {
   app.get("/v1/id/objects/", async (req, res) => {
+
+    // todo: enkel objecten die niet resolven naar een ander. 
 
     const records = await fetchAllLDESrecordsObjects();
     const filteredObjects = [];
 
     // pagination
-    let { pageNumber = 1, itemsPerPage = 20, license = "ALL" } = req.query
+    let { pageNumber = 1, itemsPerPage = 20, license = "ALL" , fullRecord = true} = req.query
     pageNumber = Number(pageNumber)
     itemsPerPage = Number(itemsPerPage)
 
     let allMatchedRecords = []
+    console.log(fullRecord)
+
 
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
 
       // query for licenses
-      if(license !== "ALL" && (!record["CC_Licenses"] || !record["CC_Licenses"].includes(CC_LICENSES[license]))) {
+      if((license !== "ALL" && (!record["CC_Licenses"] || !record["CC_Licenses"].includes(CC_LICENSES[license]))) || record["STATUS"] !== "HEALTHY") {
         continue;
       }
 
-      let object = {
-        "@context": COMMON_CONTEXT,
-        "@id": `${BASE_URI}id/object/${record["objectNumber"]}`,
-        "@type": "MensgemaaktObject",
-        "Object.identificator": [{
-          "@type": "Identificator",
-          "Identificator.identificator": {
-            "@value": record["objectNumber"],
-          },
-        }],
-      };
-      allMatchedRecords.push(object);
+      if (fullRecord == "false") {
+        let object = {
+          "@context": COMMON_CONTEXT,
+          "@id": `${BASE_URI}id/object/${record["objectNumber"]}`,
+          "@type": "MensgemaaktObject",
+          "Object.identificator": [{
+            "@type": "Identificator",
+            "Identificator.identificator": {
+              "@value": record["objectNumber"],
+            },
+          }],
+        };
+        allMatchedRecords.push(object);
+      } else {
+        allMatchedRecords.push(record["LDES_raw"])
+      }
+
     }
 
     const totalPages = Math.ceil(allMatchedRecords.length / itemsPerPage);
@@ -74,6 +82,5 @@ export function requestObjects(app, BASE_URI) {
       "GecureerdeCollectie.curator": "Design Museum Gent",
       "GecureerdeCollectie.bestaatUit": filteredObjects
     });
-
   })
 }
